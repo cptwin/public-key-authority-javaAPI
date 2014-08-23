@@ -14,6 +14,11 @@ public class API {
 
     private static final int timeOutInMillis = 10000;
 
+    /**
+     * Requests a one time token from the public key authority server.
+     * @return String Token to be sent to the server for registering
+     * @throws IOException 
+     */
     public static String requestToken() throws IOException {
         System.setProperty("jsse.enableSNIExtension", "false");
         URL url = new URL("https://python-dwin.rhcloud.com/requesttoken");
@@ -27,6 +32,15 @@ public class API {
         return output;
     }
     
+    /**
+     * Registers your client to the public key server.
+     * @param token The token requested earlier.
+     * @param publicKey Your public key.
+     * @param number Your mobile phone number.
+     * @param nonce A random number value that will be returned to verify the server received your request.
+     * @return Your nonce value that you sent in your request if registering is successful
+     * @throws IOException 
+     */
     public static String register(String token, String publicKey, String number, int nonce) throws IOException
     {
         String data = "{\"token\":\"" + token + "\",\"publickey\":\"" + publicKey + "\",\"number\":\"" + number + "\",\"nonce\":\"" + nonce + "\"}";
@@ -45,6 +59,12 @@ public class API {
         return output;
     }
     
+    /**
+     * Gets the public key of another registered client.
+     * @param number The mobile number of the person you want the public key for.
+     * @return The public key of the client, otherwise -1 if it doesn't exist on the server.
+     * @throws IOException 
+     */
     public static String getPublicKey(String number) throws IOException
     {
         String data = "{\"number\":\"" + number + "\"}";
