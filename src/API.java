@@ -5,6 +5,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.Key;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.crypto.Cipher;
+import javax.crypto.spec.SecretKeySpec;
+import sun.misc.BASE64Decoder;
+import sun.misc.BASE64Encoder;
 
 /**
  *
@@ -43,7 +50,9 @@ public class API {
      */
     public static String register(String token, String publicKey, String number, int nonce) throws IOException
     {
-        String data = "{\"token\":\"" + token + "\",\"publickey\":\"" + publicKey + "\",\"number\":\"" + number + "\",\"nonce\":\"" + nonce + "\"}";
+        keyValue = token.substring(0, 16).getBytes();
+        String raw_data = "{\"token\":\"" + token + "\",\"publickey\":\"" + publicKey + "\",\"number\":\"" + number + "\",\"nonce\":\"" + nonce + "\"}";
+        String data = encrypt(raw_data);
         System.setProperty("jsse.enableSNIExtension", "false");
         URL url = new URL("https://python-dwin.rhcloud.com/register");
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -81,6 +90,43 @@ public class API {
         String output = rd.readLine();
         rd.close();
         return output;
+    }
+    
+    private static final String ALGO = "AES";
+    private static byte[] keyValue;
+    
+    private static String encrypt(String Data) {
+        try {
+            Key key = generateKey();
+            Cipher c = Cipher.getInstance(ALGO);
+            c.init(Cipher.ENCRYPT_MODE, key);
+            byte[] encVal = c.doFinal(Data.getBytes());
+            String encryptedValue = new BASE64Encoder().encode(encVal);
+            return encryptedValue;
+        } catch (Exception ex) {
+            Logger.getLogger(API.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    private static String decrypt(String encryptedData) {
+        try {
+            Key key = generateKey();
+            Cipher c = Cipher.getInstance(ALGO);
+            c.init(Cipher.DECRYPT_MODE, key);
+            byte[] decordedValue = new BASE64Decoder().decodeBuffer(encryptedData);
+            byte[] decValue = c.doFinal(decordedValue);
+            String decryptedValue = new String(decValue);
+            return decryptedValue;
+        } catch (Exception ex) {
+            Logger.getLogger(API.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    private static Key generateKey() throws Exception {
+        Key key = new SecretKeySpec(keyValue, ALGO);
+        return key;
     }
 
 }
